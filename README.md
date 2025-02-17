@@ -33,14 +33,14 @@ node server.js
 Go to http://localhost:3000 in two different browser tabs (or devices) to start playing!
 
 ## How to Play
-1️⃣ Place your ships on the grid by selecting a ship and clicking on cells.
-2️⃣ Rotate ships before placing using the "Rotate" button.
-3️⃣ Click "Next Player" after placing all ships.
-4️⃣ Player 2 places their ships and clicks "Next Player."
-5️⃣ Player 2 starts the game.
-6️⃣ Take turns attacking the opponent’s board by clicking on cells.
-7️⃣ Hit or miss feedback will be displayed in real-time.
-8️⃣ Game ends when all ships of one player are sunk!
+1️⃣ Place your ships on the grid by selecting a ship and clicking on cells. <br>
+2️⃣ Rotate ships before placing using the "Rotate" button.<br>
+3️⃣ Click "Next Player" after placing all ships. <br>
+4️⃣ Player 2 places their ships and clicks "Next Player." <br>
+5️⃣ Player 2 starts the game. <br>
+6️⃣ Take turns attacking the opponent’s board by clicking on cells. <br>
+7️⃣ Hit or miss feedback will be displayed in real-time. <br>
+8️⃣ Game ends when all ships of one player are sunk! <br>
 
 
 ## Future Enhancements
