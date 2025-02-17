@@ -1,4 +1,4 @@
-# Codebreakers-Vertex-Innovate-2025
+# CodingMonarchs-Vertex-Innovate-2025
 Contains the repository files for our team's (Coding Monarchs) 48-hour online hackathon.
 
 
