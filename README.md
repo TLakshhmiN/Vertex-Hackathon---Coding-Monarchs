@@ -42,6 +42,18 @@ Go to http://localhost:3000 in two different browser tabs (or devices) to start 
 7️⃣ Hit or miss feedback will be displayed in real-time. <br>
 8️⃣ Game ends when all ships of one player are sunk! <br>
 
+## Demonstartion:
+### Player1: Placing the ships
+![image](https://github.com/user-attachments/assets/8c101c3c-b2e4-4120-9293-dd824160c741) <br>
+![image](https://github.com/user-attachments/assets/87b05cf2-fb0c-4a0b-b591-afea8ad31d89) <br>
+### Player2: Placing the ships
+![image](https://github.com/user-attachments/assets/ea8dde25-8586-49b4-8dfa-194197ed13d7) <br>
+### Starting the game and playing
+Player 1 : ![image](https://github.com/user-attachments/assets/57f0a0da-94ba-456b-a56c-b2fe4fb0a084) <br>
+Player 2: ![image](https://github.com/user-attachments/assets/8aca01da-a692-41d6-be3d-b0fd4043b22b) <br>
+### And once one of the players has won, the game will be reset
+![image](https://github.com/user-attachments/assets/89d07018-d196-42e6-afd1-8c852f42d73e) <br>
+
 
 ## Future Enhancements
 🎙️ We explored ways to make battles more engaging, including richer player interactions using voice commands. While not all features made the final cut, there's room for exciting improvements in future versions!
