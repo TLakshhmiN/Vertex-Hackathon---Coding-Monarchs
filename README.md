@@ -2,7 +2,7 @@
 Contains the repository files for our team's (Coding Monarchs) 48-hour online hackathon.
 
 
-# Voice Controlled Battleship Game Project 🚢💥  
+# Battleship Game Project 🚢💥  
 
 ## Overview  
 This is an interactive **multiplayer Battleship game** built using **Node.js, Express, and Socket.io** for real-time gameplay. Players take turns placing their ships and attacking their opponent's grid until all ships are sunk.  
@@ -41,3 +41,8 @@ Go to http://localhost:3000 in two different browser tabs (or devices) to start 
 6️⃣ Take turns attacking the opponent’s board by clicking on cells.
 7️⃣ Hit or miss feedback will be displayed in real-time.
 8️⃣ Game ends when all ships of one player are sunk!
+
+
+## Future Enhancements
+🎙️ We explored ways to make battles more engaging, including richer player interactions using voice commands. While not all features made the final cut, there's room for exciting improvements in future versions!
+
