@@ -103,7 +103,7 @@ def recognize_speech():
             print(f"Recognized: {text}")
 
             command = classifier.predict_command(text)
-            print(f"Predicted command: {command}")
+            
 
             return command if command else "Invalid command"
         except sr.UnknownValueError:
