@@ -76,10 +76,29 @@
             left: 50%;
             transform: translateX(-50%);
         }
+        #playerLabel {
+            font-size: 1.5em;
+            color: #333;
+            margin: 10px 0;
+        }
+        #resetButton {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        #resetButton:hover {
+            background-color: #ff5252;
+        }
     </style>
 </head>
 <body>
     <h1>Battleship Game</h1>
+    <div id="playerLabel"></div>
     <div id="message">Waiting for both players...</div>
 
     <div id="shipPlacement" class="controls">
@@ -110,6 +129,7 @@
     <div class="controls">
         <button id="finishPlacement" disabled>Finish Placement</button>
         <button id="startGame" disabled>Start Game</button>
+        <button id="resetButton" class="hidden">Reset Game</button>
     </div>
 
     <script>
@@ -122,13 +142,18 @@
         let horizontal = true;
         let gameActive = false;
 
-        // Initialize game boards with coordinate labels
+        
+        function updatePlayerLabel(num) {
+            document.getElementById('playerLabel').textContent = `You are Player ${num}`;
+        }
+
+        
         function createBoard(boardId) {
             const board = document.getElementById(boardId);
             
-            // Create column labels (0-9)
+            
             const headerRow = document.createElement("tr");
-            headerRow.appendChild(document.createElement("td")); // Empty corner cell
+            headerRow.appendChild(document.createElement("td")); 
             for (let i = 0; i < 10; i++) {
                 const th = document.createElement("td");
                 th.innerHTML = `<span class="coordinate-label col-label">${i}</span>`;
@@ -136,7 +161,7 @@
             }
             board.appendChild(headerRow);
             
-            // Create rows with row labels
+            
             for (let i = 0; i < 10; i++) {
                 const row = document.createElement("tr");
                 
@@ -145,7 +170,7 @@
                 labelCell.innerHTML = `<span class="coordinate-label row-label">${i}</span>`;
                 row.appendChild(labelCell);
                 
-                // Add grid cells
+                
                 for (let j = 0; j < 10; j++) {
                     const cell = document.createElement("td");
                     cell.dataset.row = i;
@@ -158,7 +183,7 @@
             }
         }
 
-        // Handle cell clicks
+        
         function handleClick(boardId, row, col) {
             if (!gameActive) return;
 
@@ -169,14 +194,14 @@
             }
         }
 
-        // Place a ship on the board
+        
         function placeShip(row, col) {
             if (!selectedShip || placedShips[selectedShip]) return;
             
             const shipSize = getShipSize(selectedShip);
             const positions = [];
 
-            // Validate placement
+            
             for (let i = 0; i < shipSize; i++) {
                 const newRow = horizontal ? row : row + i;
                 const newCol = horizontal ? col + i : col;
@@ -197,7 +222,7 @@
                 positions.push({ row: newRow, col: newCol });
             }
 
-            // Place the ship
+            
             positions.forEach(pos => {
                 const cell = document.querySelector(
                     `#playerBoard td[data-row="${pos.row}"][data-col="${pos.col}"]`
@@ -216,7 +241,7 @@
             }
         }
 
-        // Make an attack
+        
         function makeAttack(row, col) {
             if (currentTurn !== playerNumber) {
                 showMessage("Not your turn!");
@@ -234,7 +259,7 @@
             socket.emit("attack", { row, col });
         }
 
-        // Handle voice commands
+        
         function handleVoiceCommand(command) {
             console.log('Processing voice command:', command);
             
@@ -257,7 +282,7 @@
             }
         }
 
-        // Get ship size
+        
         function getShipSize(shipType) {
             const sizes = {
                 carrier: 5,
@@ -269,13 +294,13 @@
             return sizes[shipType] || 0;
         }
 
-        // Show message to user
+        
         function showMessage(text) {
             const messageElement = document.getElementById("message");
             messageElement.textContent = text;
         }
 
-        // Set opponent board clickable state
+        
         function setOpponentBoardClickable(clickable) {
             const cells = document.querySelectorAll("#opponentBoard .grid-cell");
             cells.forEach(cell => {
@@ -288,7 +313,7 @@
             });
         }
 
-        // Event Listeners
+        
         document.getElementById("shipSelect").addEventListener("change", (e) => {
             selectedShip = e.target.value;
         });
@@ -311,12 +336,18 @@
             showMessage("Voice command activated - speak now");
         });
 
-        // Socket Event Handlers
+        document.getElementById('resetButton').addEventListener('click', () => {
+            socket.emit('requestReset');
+            document.getElementById('resetButton').classList.add('hidden');
+        });
+
+        
         socket.on('voiceCommand', handleVoiceCommand);
 
         socket.on("playerNumber", (num) => {
             playerNumber = num;
             gameActive = true;
+            updatePlayerLabel(num);
             showMessage(num === 1 ? "Place your ships" : "Waiting for Player 1 to place ships");
             document.getElementById("playerBoard").classList.add(`player-${num}`);
         });
@@ -427,10 +458,19 @@
         socket.on("gameOver", ({ winner }) => {
             gameActive = false;
             const message = winner === playerNumber ? 
-                "Congratulations! You won the game!" : 
-                "Game Over! Your opponent won.";
+                `Congratulations! You (Player ${playerNumber}) won the game!` : 
+                `Game Over! Player ${winner} won the game!`;
             showMessage(message);
             setOpponentBoardClickable(false);
+            document.getElementById('resetButton').classList.remove('hidden');
+        });
+
+        socket.on("alreadyAttacked", () => {
+            showMessage("Error: This position has already been attacked");
+        });
+
+        socket.on("notYourTurn", () => {
+            showMessage("Error: Not your turn");
         });
 
         socket.on("gameReset", () => {
@@ -456,7 +496,7 @@
             updateGameState(state);
         });
 
-        // Helper function to reset game state
+        
         function resetGameState() {
             placingShips = true;
             selectedShip = null;
@@ -465,26 +505,27 @@
             gameActive = true;
             currentTurn = 0;
 
-            // Clear both boards
+            
             document.querySelectorAll(".grid-cell").forEach(cell => {
                 cell.className = "grid-cell";
             });
 
-            // Reset UI elements
+            
             document.getElementById("shipPlacement").classList.remove("hidden");
             document.getElementById("startGame").classList.remove("hidden");
             document.getElementById("finishPlacement").disabled = true;
             document.getElementById("startGame").disabled = true;
+            document.getElementById("resetButton").classList.add("hidden");
             document.getElementById("shipSelect").value = "";
         }
 
-        // Helper function to update game state
+        
         function updateGameState(state) {
             currentTurn = state.currentTurn;
             placingShips = state.placementPhase;
             gameActive = state.gameStarted;
 
-            // Update ships
+            
             Object.entries(state.myShips).forEach(([shipType, positions]) => {
                 positions.forEach(pos => {
                     const cell = document.querySelector(
@@ -495,7 +536,7 @@
                 placedShips[shipType] = positions;
             });
 
-            // Update hits and misses
+            
             state.myHits.forEach(({ row, col, hit }) => {
                 const cell = document.querySelector(
                     `#opponentBoard td[data-row="${row}"][data-col="${col}"]`
@@ -513,7 +554,7 @@
             setOpponentBoardClickable(currentTurn === playerNumber && gameActive);
         }
 
-        // Initialize boards
+    
         createBoard("playerBoard");
         createBoard("opponentBoard");
     </script>
