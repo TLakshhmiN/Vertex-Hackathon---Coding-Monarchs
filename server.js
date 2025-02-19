@@ -8,7 +8,6 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Configure Python shell with absolute path
 const pythonPath = path.join(__dirname, 'voice_commands.py');
 const pythonShells = new Map();
 
@@ -25,7 +24,7 @@ function startPythonShell(playerNumber) {
             const [command, ...params] = message.split(' ');
             const player = parseInt(params[params.length - 1]);
             
-            // Emit command only to the specific player
+            
             const socketId = getSocketIdByPlayer(player);
             if (socketId) {
                 io.to(socketId).emit('voiceCommand', message);
@@ -46,13 +45,14 @@ function startPythonShell(playerNumber) {
 
 app.use(express.static(__dirname));
 
-// Game state
+
 let players = {};
 let ships = { 1: {}, 2: {} };
 let boardHits = { 1: [], 2: [] };
 let currentTurn = 1;
 let gameStarted = false;
 let placementPhase = { 1: true, 2: true };
+let gameEnded = false;
 
 io.on("connection", (socket) => {
     console.log("A player connected:", socket.id);
@@ -67,7 +67,7 @@ io.on("connection", (socket) => {
     players[socket.id] = playerNumber;
     socket.emit("playerNumber", playerNumber);
 
-    // Start Python shell for this player
+    
     pythonShells.set(playerNumber, startPythonShell(playerNumber));
 
     socket.on("placeShip", ({ shipType, positions }) => {
@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
             return;
         }
 
-        // Validate ship positions
+        
         if (!validateShipPlacement(positions, player)) {
             socket.emit("invalidPlacement", shipType);
             return;
@@ -114,6 +114,7 @@ io.on("connection", (socket) => {
     socket.on("startGame", () => {
         if (!placementPhase[1] && !placementPhase[2]) {
             gameStarted = true;
+            gameEnded = false;
             currentTurn = 1;
             io.emit("gameStarted", currentTurn);
             io.to(getSocketIdByPlayer(currentTurn)).emit("yourTurn");
@@ -124,7 +125,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("attack", ({ row, col }) => {
-        if (!gameStarted) return;
+        if (!gameStarted || gameEnded) return;
 
         let player = players[socket.id];
         if (!player || player !== currentTurn) {
@@ -132,7 +133,7 @@ io.on("connection", (socket) => {
             return;
         }
 
-        // Check if this coordinate was already attacked
+        
         let opponent = player === 1 ? 2 : 1;
         if (boardHits[opponent].some(hit => hit.row === row && hit.col === col)) {
             socket.emit("alreadyAttacked");
@@ -144,15 +145,21 @@ io.on("connection", (socket) => {
         io.emit("attackResult", { row, col, hit, attacker: player });
 
         if (checkGameOver(opponent)) {
+            gameEnded = true;
             io.emit("gameOver", { winner: player });
-            resetGame();
             return;
         }
 
-        // Switch turns
+        
         currentTurn = opponent;
         io.emit("turnUpdate", currentTurn);
         io.to(getSocketIdByPlayer(currentTurn)).emit("yourTurn");
+    });
+
+    socket.on("requestReset", () => {
+        if (!gameEnded) return;
+        resetGame();
+        io.emit("gameReset");
     });
 
     socket.on("disconnect", () => {
@@ -165,6 +172,7 @@ io.on("connection", (socket) => {
             }
             delete players[socket.id];
             resetGame();
+            io.emit("playerDisconnected");
         }
     });
 
@@ -178,12 +186,12 @@ io.on("connection", (socket) => {
 });
 
 function validateShipPlacement(positions, player) {
-    // Check if positions are within bounds
+    
     if (!positions.every(pos => pos.row >= 0 && pos.row < 10 && pos.col >= 0 && pos.col < 10)) {
         return false;
     }
 
-    // Check if positions overlap with existing ships
+    
     return !positions.some(newPos => 
         Object.values(ships[player]).some(ship =>
             ship.some(pos => pos.row === newPos.row && pos.col === newPos.col)
@@ -215,11 +223,10 @@ function resetGame() {
     boardHits = { 1: [], 2: [] };
     currentTurn = 1;
     gameStarted = false;
+    gameEnded = false;
     placementPhase = { 1: true, 2: true };
-    io.emit("gameReset");
 }
 
-// Helper function to validate turn sequence
 function validateTurn(socket, action) {
     const player = players[socket.id];
     if (!player) {
@@ -245,7 +252,6 @@ function validateTurn(socket, action) {
     return true;
 }
 
-// Helper function to validate ship placement
 function validateShipConfiguration(ships, player) {
     const requiredShips = {
         carrier: 5,
@@ -261,7 +267,6 @@ function validateShipConfiguration(ships, player) {
             return false;
         }
 
-        // Validate ship continuity
         if (!isShipContinuous(ship)) {
             return false;
         }
@@ -273,13 +278,11 @@ function validateShipConfiguration(ships, player) {
 function isShipContinuous(positions) {
     if (positions.length < 2) return true;
 
-    // Sort positions by row and column
     positions.sort((a, b) => {
         if (a.row === b.row) return a.col - b.col;
         return a.row - b.row;
     });
 
-    // Check if positions are continuous
     let isHorizontal = positions[0].row === positions[1].row;
     let isVertical = positions[0].col === positions[1].col;
 
@@ -302,7 +305,6 @@ function isShipContinuous(positions) {
     return true;
 }
 
-// Handle game state synchronization
 function syncGameState(socket) {
     const player = players[socket.id];
     if (!player) return;
@@ -317,13 +319,12 @@ function syncGameState(socket) {
     });
 }
 
-// Error handling middleware
+
 app.use((err, req, res, next) => {
     console.error("Server error:", err);
     res.status(500).json({ error: "Internal server error" });
 });
 
-// Cleanup function for when server shuts down
 function cleanup() {
     console.log("Cleaning up resources...");
     for (const [player, pyshell] of pythonShells.entries()) {
